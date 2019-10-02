@@ -1,12 +1,13 @@
 import React from 'react';
-import { Alert } from 'react-native';
 import { GiftedChat } from 'react-native-gifted-chat';
 import { ChatManager, TokenProvider } from '@pusher/chatkit-client';
 
-const CHATKIT_TOKEN_PROVIDER_ENDPOINT = 'PUSHER_TOKEN_URL';
-const CHATKIT_INSTANCE_LOCATOR = 'PUSHER_CHATKIT_INSTANCE_LOCATOR';
-const CHATKIT_ROOM_ID = 'ROOM_ID';
-const CHATKIT_USER_NAME = 'pusher-test-user';
+import {
+  CHATKIT_TOKEN_PROVIDER_ENDPOINT,
+  CHATKIT_INSTANCE_LOCATOR,
+  CHATKIT_ROOM_ID,
+  CHATKIT_USER_NAME,
+} from './keys/keys';
 
 export default class MyChat extends React.Component {
   state = {
@@ -31,14 +32,52 @@ export default class MyChat extends React.Component {
         this.currentUser.subscribeToRoom({
           roomId: CHATKIT_ROOM_ID,
           hooks: {
-            onMessage: message => alert(message.text),
+            onMessage: this.onReceive,
           },
         });
       })
-      .catch(err => console.warn(err));;
+      .catch(err => console.warn(err));
   }
 
+  onReceive = data => {
+    const { id, senderId, text, createdAt } = data;
+    const incomingMessage = {
+      _id: id,
+      text: text,
+      createdAt: new Date(),
+      user: {
+        _id: senderId,
+        name: senderId,
+        avatar:
+          'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQmXGGuS_PrRhQt73sGzdZvnkQrPXvtA-9cjcPxJLhLo8rW-sVA',
+      },
+    };
+    this.setState(previousState => ({
+      messages: GiftedChat.append(previousState.messages, incomingMessage),
+    }));
+  };
+
+  onSend = (messages = []) => {
+    messages.forEach(message => {
+      this.currentUser
+        .sendMessage({
+          text: message.text,
+          roomId: CHATKIT_ROOM_ID,
+        })
+        .then(() => {})
+        .catch(err => console.warn(err));
+    });
+  };
+
   render() {
-    return <GiftedChat messages={this.state.messages} />;
+    return (
+      <GiftedChat
+        messages={this.state.messages}
+        onSend={messages => this.onSend(messages)}
+        user={{
+          _id: CHATKIT_USER_NAME,
+        }}
+      />
+    );
   }
 }
