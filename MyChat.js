@@ -1,5 +1,5 @@
 import React from 'react';
-import { GiftedChat } from 'react-native-gifted-chat';
+import { GiftedChat, Bubble } from 'react-native-gifted-chat';
 import { ChatManager, TokenProvider } from '@pusher/chatkit-client';
 
 import {
@@ -69,14 +69,59 @@ export default class MyChat extends React.Component {
     });
   };
 
+  getColor(username) {
+    let sumChars = 0;
+    for (let i = 0; i < username.length; i++) {
+      sumChars += username.charCodeAt(i);
+    }
+
+    const colors = [
+      '#e67e22', // carrot
+      // '#2ecc71', // emerald
+      // '#3498db', // peter river
+      // '#8e44ad', // wisteria
+      // '#e74c3c', // alizarin
+      // '#1abc9c', // turquoise
+      // '#2c3e50', // midnight blue
+    ];
+    return colors[sumChars % colors.length];
+  }
+
+  renderBubble = props => {
+    let username = props.currentMessage.user.name;
+    let color = this.getColor(username);
+
+    return (
+      <Bubble
+        {...props}
+        textStyle={{
+          right: {
+            color: 'white',
+          },
+        }}
+        wrapperStyle={{
+          left: {
+            backgroundColor: color,
+          },
+        }}
+      />
+    );
+  };
+
   render() {
     return (
       <GiftedChat
+        placeholder="Enter your message :)"
         messages={this.state.messages}
         onSend={messages => this.onSend(messages)}
         user={{
           _id: CHATKIT_USER_NAME,
         }}
+        isAnimated={true}
+        onPressAvatar={() => console.warn('OnPressAvatar')}
+        scrollToBottom={true}
+        scrollToBottomOffset={0}
+        renderBubble={this.renderBubble}
       />
     );
   }
